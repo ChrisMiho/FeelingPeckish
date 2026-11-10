@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: FeelingPeckish
+## Notes: Prints a silly reminder in your chat frame when your Well Fed food buff runs out.
+## Author: ChrisMiho
+## Version: @project-version@
+## Category: Miscellaneous
+## SavedVariables: FeelingPeckishDB
+
+src\Phrases.lua
+src\Core.lua
+src\Init.lua

@@ -1,0 +1,20 @@
+# Libraries (if ever added) are fetched from .pkgmeta by the packager, never committed
+/Libs/
+
+# Build output (scripts/build.sh), packager and secrets
+/.release/
+.env
+
+# Build and test leftovers
+*.zip
+luacov.*.out
+
+# Lua toolchains installed into the workspace by CI
+/.lua/
+/.luarocks/
+
+# Local tooling state
+/.superpowers/
+/.worktrees/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+package-as: FeelingPeckish
+
+# No libraries. If one is ever needed, add it here under "externals:" pinned
+# to a release tag, load it from embeds.xml, and never commit Libs/.
+
+# Development files that must not ship in the addon zip
+ignore:
+  - spec
+  - scripts
+  - PRD.md
+  - CLAUDE.md
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

@@ -1,0 +1,23 @@
+name: Release
+
+# Runs when a version tag such as v0.1.0 is pushed. The packager stamps the
+# version into the .toc, builds the zip and attaches it to a GitHub release.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history, for the changelog
+
+      - uses: BigWigsMods/packager@v2.6.1
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

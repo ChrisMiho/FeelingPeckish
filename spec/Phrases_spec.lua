@@ -1,0 +1,6 @@
+describe("Phrases", function()
+	it("loads as an addon file", function()
+		local ns = LoadAddonFile("src/Phrases.lua")
+		assert.is_table(ns.Phrases)
+	end)
+end)

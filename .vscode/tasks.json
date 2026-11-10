@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"options": {
+		"shell": {
+			"executable": "C:\\Program Files\\Git\\bin\\bash.exe",
+			"args": ["-c"]
+		}
+	},
+	"tasks": [
+		{
+			"label": "Build and install",
+			"detail": "Package, zip into .release/, and install into the game's AddOns folder",
+			"type": "shell",
+			"command": "scripts/build.sh",
+			"group": { "kind": "build", "isDefault": true },
+			"problemMatcher": []
+		},
+		{
+			"label": "Build zip only",
+			"detail": "Package and zip into .release/ without touching the game",
+			"type": "shell",
+			"command": "scripts/build.sh --no-install",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Lint and test",
+			"type": "shell",
+			"command": "luacheck . && busted",
+			"options": {
+				"shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
+			},
+			"group": { "kind": "test", "isDefault": true },
+			"problemMatcher": []
+		}
+	]
+}
