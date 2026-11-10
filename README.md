@@ -18,7 +18,7 @@ The setting is saved per account in `FeelingPeckishDB`.
 
 ## Install (players)
 
-1. Download the latest `FeelingPeckish-<version>.zip` from the
+1. Download the latest `FeelingPeckish-<version>-forever.zip` from the
    [Releases](../../releases) page.
 2. Unzip it into `World of Warcraft\_forever_\Interface\AddOns\`, so you end up
    with `...\AddOns\FeelingPeckish\FeelingPeckish.toc`.
