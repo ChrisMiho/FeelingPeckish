@@ -13,13 +13,22 @@ local REMINDER_PREFIX = "Still peckish: "
 
 local tracker = Core.newTracker()
 local reminder -- pending C_Timer handle, or nil
+local series -- the running reminder series (Core.newSeries), or nil
 
 local function print(text)
 	DEFAULT_CHAT_FRAME:AddMessage(PREFIX .. text)
 end
 
+-- The normalised FeelingPeckishDB; a fresh defaults table before ADDON_LOADED.
+function ns.getSettings()
+	if type(FeelingPeckishDB) == "table" then
+		return FeelingPeckishDB
+	end
+	return Core.normalizeSettings({})
+end
+
 local function isEnabled()
-	return FeelingPeckishDB == nil or FeelingPeckishDB.enabled ~= false
+	return ns.getSettings().enabled
 end
 
 -- True or false, or nil when the client will not tell us (an aura name that
@@ -72,39 +81,70 @@ end
 local function context()
 	return {
 		hasBuff = hasWellFed(),
-		enabled = isEnabled(),
 		dead = UnitIsDeadOrGhost("player") and true or false,
 		resting = IsResting() and true or false,
 	}
 end
 
-local function cancelReminder()
+local function cancelSeries()
 	if reminder then
 		reminder:Cancel()
 		reminder = nil
 	end
+	series = nil
 end
 
-local function armReminder()
-	cancelReminder()
-	reminder = C_Timer.NewTimer(Core.REMINDER_DELAY, function()
-		reminder = nil
-		if Core.shouldRemind(context()) then
-			print(REMINDER_PREFIX .. pickPhrase())
-		end
-	end)
+local scheduleReminder
+
+local function onReminderDue()
+	reminder = nil
+	if not series then
+		return
+	end
+	local result = Core.reminderDue(series, context(), ns.getSettings())
+	if result.print then
+		print(REMINDER_PREFIX .. pickPhrase())
+	end
+	if result.again then
+		scheduleReminder()
+	else
+		series = nil
+	end
+end
+
+function scheduleReminder()
+	reminder = C_Timer.NewTimer(ns.getSettings().reminderInterval, onReminderDue)
+end
+
+local function armSeries()
+	cancelSeries()
+	series = Core.newSeries()
+	scheduleReminder()
+end
+
+-- Copy every setting from a draft into FeelingPeckishDB. A pending reminder
+-- keeps its timer; later reminders read the new settings.
+function ns.applySettings(draft)
+	local db = ns.getSettings()
+	for key in pairs(Core.DEFAULTS) do
+		db[key] = draft[key]
+	end
+	Core.normalizeSettings(db)
+	if not Core.keepsSeries(db) then
+		cancelSeries()
+	end
 end
 
 local auraCheckQueued = false
 
 local function checkAuras()
 	auraCheckQueued = false
-	local result = Core.onAuraChange(tracker, context())
+	local result = Core.onAuraChange(tracker, context(), ns.getSettings())
 	if result.cancel then
-		cancelReminder()
+		cancelSeries()
 	end
 	if result.arm then
-		armReminder()
+		armSeries()
 	end
 	if result.announce then
 		print(pickPhrase())
@@ -130,12 +170,7 @@ frame:RegisterUnitEvent("UNIT_AURA", "player")
 frame:SetScript("OnEvent", function(self, event, arg1)
 	if event == "ADDON_LOADED" then
 		if arg1 == addonName then
-			if type(FeelingPeckishDB) ~= "table" then
-				FeelingPeckishDB = {}
-			end
-			if type(FeelingPeckishDB.enabled) ~= "boolean" then
-				FeelingPeckishDB.enabled = true
-			end
+			FeelingPeckishDB = Core.normalizeSettings(FeelingPeckishDB)
 			self:UnregisterEvent("ADDON_LOADED")
 		end
 	elseif event == "PLAYER_LOGIN" then
@@ -155,14 +190,23 @@ end)
 SLASH_FEELINGPECKISH1 = "/peckish"
 SlashCmdList.FEELINGPECKISH = function(msg)
 	local command = Core.parseCommand(msg)
-	if command == "on" then
-		FeelingPeckishDB.enabled = true
-		print("on. Snack alerts armed.")
-	elseif command == "off" then
-		FeelingPeckishDB.enabled = false
-		cancelReminder()
-		print("off. Starve in peace.")
+	if command == "open" then
+		if ns.Options then
+			ns.Options.Toggle()
+		end
+	elseif command == "on" or command == "off" then
+		local enabled = command == "on"
+		ns.getSettings().enabled = enabled
+		if enabled then
+			print("on. Snack alerts armed.")
+		else
+			cancelSeries()
+			print("off. Starve in peace.")
+		end
+		if ns.Options then
+			ns.Options.SyncEnabled(enabled)
+		end
 	else
-		print((isEnabled() and "on" or "off") .. ". Usage: /peckish on, /peckish off")
+		print((isEnabled() and "on" or "off") .. ". Usage: /peckish opens settings, /peckish on, /peckish off")
 	end
 end
