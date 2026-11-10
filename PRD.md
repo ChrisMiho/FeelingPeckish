@@ -1,6 +1,6 @@
 # FeelingPeckish — Product requirements
 
-Status: v0.1.0 built (2026-11-10), awaiting in-game testing (section 4.3).
+Status: v0.1.0 released (2026-11-10) for in-game testing (section 4.3).
 
 ## 1. What it is
 

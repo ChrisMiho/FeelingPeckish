@@ -5,7 +5,7 @@ runs out and prints a silly message in your own chat frame, plus one reminder
 60 seconds later if you still have not eaten. Only you see the messages;
 nothing is ever sent to a chat channel. No UI, no libraries.
 
-Status: in development, no release yet. See [PRD.md](PRD.md) for the design.
+Status: v0.1.0, first release for in-game testing. See [PRD.md](PRD.md) for the design.
 
 ## Commands
 

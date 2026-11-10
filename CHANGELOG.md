@@ -5,6 +5,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-10
+
 - Project setup: build, lint, test and release tooling.
 - A silly message in your chat frame when your Well Fed buff falls off, and one
   reminder 60 seconds later if you have not eaten. Quiet while dead or resting.
