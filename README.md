@@ -2,8 +2,9 @@
 
 A World of Warcraft: Forever addon that notices when your "Well Fed" food buff
 runs out and prints a silly message in your own chat frame, plus one reminder
-60 seconds later if you still have not eaten. Only you see the messages;
-nothing is ever sent to a chat channel. No UI, no libraries.
+60 seconds later if you still have not eaten (configurable). Only you see the
+messages; nothing is ever sent to a chat channel. One small settings window,
+no libraries.
 
 Status: v0.1.0, first release for in-game testing. See [PRD.md](PRD.md) for the design.
 
@@ -11,10 +12,11 @@ Status: v0.1.0, first release for in-game testing. See [PRD.md](PRD.md) for the 
 
 | Command | What it does |
 |---------|--------------|
+| `/peckish` | Open the settings window (again to close it) |
 | `/peckish on` | Turn the messages on |
 | `/peckish off` | Turn the messages off |
 
-The setting is saved per account in `FeelingPeckishDB`.
+The settings are saved per account in `FeelingPeckishDB`.
 
 ## Install (players)
 

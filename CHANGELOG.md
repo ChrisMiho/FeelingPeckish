@@ -5,6 +5,12 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- A small settings window: type `/peckish` to open it.
+- Toggles to stay quiet while dead or while resting.
+- Repeating reminders: choose the interval and how many, or keep reminding
+  until you eat.
+- Defaults are unchanged from 0.1.0: nothing differs until you change a setting.
+
 ## [0.1.0] - 2026-11-10
 
 - Project setup: build, lint, test and release tooling.
