@@ -8,4 +8,5 @@
 
 src\Phrases.lua
 src\Core.lua
+src\Options.lua
 src\Init.lua

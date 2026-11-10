@@ -17,6 +17,7 @@ globals = {
 	"SlashCmdList",
 	"SLASH_FEELINGPECKISH1",
 	"FeelingPeckishDB",
+	"FeelingPeckishOptionsFrame", -- the settings window (src/Options.lua)
 }
 
 -- WoW API this addon reads. Add each new API here as it is used,
@@ -32,6 +33,8 @@ read_globals = {
 	"issecretvalue",
 	"UnitBuff",
 	"UnitIsDeadOrGhost",
+	"UIParent",
+	"UISpecialFrames",
 }
 
 files["spec/"] = {
