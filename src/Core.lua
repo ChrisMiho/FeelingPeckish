@@ -74,6 +74,14 @@ function Core.shouldRemind(ctx)
 	return ctx.hasBuff == false and Core.canSpeak(ctx) and true or false
 end
 
+-- The line printed once at login. version is "" or " <version>".
+function Core.loadedMessage(version, enabled)
+	if enabled then
+		return "loaded" .. version .. ". Snack alerts are on. /peckish off to mute."
+	end
+	return "loaded" .. version .. ". Snack alerts are off. /peckish on to arm them."
+end
+
 -- Reads a /peckish argument: returns "on", "off" or "status".
 function Core.parseCommand(msg)
 	local arg = (msg or ""):match("^%s*(.-)%s*$"):lower()

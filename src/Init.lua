@@ -24,6 +24,19 @@ end
 
 -- True or false, or nil when the client will not tell us (an aura name that
 -- is a hidden "secret" value, or no aura API at all).
+local function addonVersion()
+	local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+	local version = getMetadata and getMetadata(addonName, "Version")
+	if version and version ~= "" then
+		return " " .. version
+	end
+	return ""
+end
+
+local function loadedMessage()
+	return Core.loadedMessage(addonVersion(), isEnabled())
+end
+
 local function hasWellFed()
 	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
 		local i = 1
@@ -110,6 +123,7 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_LEAVING_WORLD")
 frame:RegisterUnitEvent("UNIT_AURA", "player")
@@ -124,6 +138,9 @@ frame:SetScript("OnEvent", function(self, event, arg1)
 			end
 			self:UnregisterEvent("ADDON_LOADED")
 		end
+	elseif event == "PLAYER_LOGIN" then
+		-- Once per login or /reload, not on every loading screen.
+		print(loadedMessage())
 	elseif event == "PLAYER_LEAVING_WORLD" then
 		-- Loading screen: forget the state so it can't look like a falloff.
 		Core.reset(tracker)

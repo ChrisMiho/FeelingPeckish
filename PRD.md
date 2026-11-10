@@ -86,7 +86,19 @@ moment it would print:
   the same phrase twice in a row (the picker remembers the last index and
   rerolls or skips it).
 
-### 3.5 Commands
+### 3.5 Loaded message
+
+Once per login or `/reload` (`PLAYER_LOGIN`, not every loading screen), print
+one line so the player knows the addon is running, with the version from the
+`.toc` and the current state:
+
+- On: `FeelingPeckish: loaded v0.1.0. Snack alerts are on. /peckish off to mute.`
+- Off: `FeelingPeckish: loaded v0.1.0. Snack alerts are off. /peckish on to arm them.`
+
+It prints even when the addon is off. In a dev build the version is the
+commit hash.
+
+### 3.6 Commands
 
 | Command | Effect | Confirmation printed |
 |---------|--------|----------------------|
@@ -96,7 +108,7 @@ moment it would print:
 
 Arguments are trimmed and case-insensitive.
 
-### 3.6 Saved settings
+### 3.7 Saved settings
 
 - SavedVariables: `FeelingPeckishDB = { enabled = true }`.
 - Created with defaults on `ADDON_LOADED` for this addon if missing; unknown or
@@ -111,7 +123,7 @@ Arguments are trimmed and case-insensitive.
 | `FeelingPeckish.toc` | Interface 16001, `## SavedVariables: FeelingPeckishDB`, loads the files below in order |
 | `src/Phrases.lua` | The 50 phrases and the no-repeat random picker. Pure; the random source is injectable for tests |
 | `src/Core.lua` | Pure state logic. Given buff present/absent, dead, resting, enabled and the previous state, returns what to print and whether to arm or cancel the reminder. No WoW API calls |
-| `src/Init.lua` | Thin glue: event frame, `ADDON_LOADED`, `PLAYER_ENTERING_WORLD`, `PLAYER_LEAVING_WORLD`, `UNIT_AURA`, `C_Timer`, slash command, SavedVariables, printing |
+| `src/Init.lua` | Thin glue: event frame, `ADDON_LOADED`, `PLAYER_LOGIN`, `PLAYER_ENTERING_WORLD`, `PLAYER_LEAVING_WORLD`, `UNIT_AURA`, `C_Timer`, slash command, SavedVariables, printing |
 | `spec/` | busted tests for `Phrases` and `Core` |
 
 Every file starts with `local addonName, ns = ...` and shares through `ns`.
@@ -141,6 +153,8 @@ No globals except `FeelingPeckishDB` and the `SLASH_FEELINGPECKISH1` /
 7. `/peckish off`, `/reload`, lose the buff: silent. `/peckish on` restores it.
 8. `/peckish off` while a reminder is pending: the reminder never fires.
 9. Watch several falloffs: no phrase repeats back-to-back.
+10. Log in or `/reload`: one `loaded` line with the version and on/off state;
+    zoning through a loading screen does not print it again.
 
 ## 5. Phrases
 

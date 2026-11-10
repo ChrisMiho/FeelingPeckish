@@ -120,6 +120,18 @@ describe("Core", function()
 		end)
 	end)
 
+	describe("loadedMessage", function()
+		it("names the version and the on state", function()
+			assert.are.equal("loaded v0.1.0. Snack alerts are on. /peckish off to mute.",
+				Core.loadedMessage(" v0.1.0", true))
+		end)
+
+		it("tells you how to turn it back on when off", function()
+			assert.are.equal("loaded. Snack alerts are off. /peckish on to arm them.",
+				Core.loadedMessage("", false))
+		end)
+	end)
+
 	describe("parseCommand", function()
 		it("reads on and off, trimmed and case-insensitive", function()
 			assert.are.equal("on", Core.parseCommand("on"))

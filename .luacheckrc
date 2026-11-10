@@ -22,7 +22,9 @@ globals = {
 -- WoW API this addon reads. Add each new API here as it is used,
 -- so a typo in an API name fails lint instead of failing in game.
 read_globals = {
+	"C_AddOns",
 	"C_Timer",
+	"GetAddOnMetadata",
 	"C_UnitAuras",
 	"CreateFrame",
 	"DEFAULT_CHAT_FRAME",
