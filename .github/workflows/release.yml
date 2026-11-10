@@ -18,6 +18,6 @@ jobs:
         with:
           fetch-depth: 0 # full history, for the changelog
 
-      - uses: BigWigsMods/packager@v2.6.1
+      - uses: BigWigsMods/packager@v2.7.0
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
