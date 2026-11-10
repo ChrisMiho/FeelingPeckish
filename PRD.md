@@ -1,6 +1,6 @@
 # FeelingPeckish — Product requirements
 
-Status: repo set up, development not started (2026-11-10).
+Status: v0.1.0 built (2026-11-10), awaiting in-game testing (section 4.3).
 
 ## 1. What it is
 
@@ -34,14 +34,20 @@ Non-goals
 
 - The player "has the buff" when any helpful aura on unit `player` is named
   exactly `Well Fed`.
-- Listen to `UNIT_AURA` and ignore every unit except `"player"`. On each event
-  rescan the player's buffs (e.g. `C_UnitAuras.GetAuraDataByIndex` or
-  `AuraUtil.ForEachAura` with `"HELPFUL"`) and compare with the last known
-  state.
+- Listen to `UNIT_AURA` for unit `"player"` only. On each event, one frame
+  later (`C_Timer.After(0)`, so the dead state has settled after a death and
+  a burst of events is handled once), rescan the player's helpful buffs and
+  compare with the last known state.
 - Only the transition **had it -> lost it** triggers a falloff. Logging in,
   `/reload` or zoning without the buff never prints anything.
-- On `PLAYER_LOGIN` (and after `/reload`) record the current state as the
-  starting point without printing.
+- On `PLAYER_ENTERING_WORLD` (login, `/reload` and every loading screen)
+  record the current state as the starting point without printing.
+- On `PLAYER_LEAVING_WORLD` forget the state, so a loading screen that
+  briefly reports no buffs only sets a new baseline.
+- Buffs are read with `C_UnitAuras.GetAuraDataByIndex`, falling back to
+  `UnitBuff` if the client lacks it. If an aura name is a hidden "secret"
+  value (`issecretvalue`, possible in combat on newer clients), the state is
+  unknown and nothing is decided until the next readable change.
 - v1 limitation: matching is by English name, so non-English clients will not
   detect the buff. A later version may match by spell ID list or icon.
 
@@ -105,12 +111,12 @@ Arguments are trimmed and case-insensitive.
 | `FeelingPeckish.toc` | Interface 16001, `## SavedVariables: FeelingPeckishDB`, loads the files below in order |
 | `src/Phrases.lua` | The 50 phrases and the no-repeat random picker. Pure; the random source is injectable for tests |
 | `src/Core.lua` | Pure state logic. Given buff present/absent, dead, resting, enabled and the previous state, returns what to print and whether to arm or cancel the reminder. No WoW API calls |
-| `src/Init.lua` | Thin glue: event frame, `ADDON_LOADED`, `PLAYER_LOGIN`, `UNIT_AURA`, `C_Timer`, slash command, SavedVariables, printing |
+| `src/Init.lua` | Thin glue: event frame, `ADDON_LOADED`, `PLAYER_ENTERING_WORLD`, `PLAYER_LEAVING_WORLD`, `UNIT_AURA`, `C_Timer`, slash command, SavedVariables, printing |
 | `spec/` | busted tests for `Phrases` and `Core` |
 
 Every file starts with `local addonName, ns = ...` and shares through `ns`.
-No globals except `FeelingPeckishDB` and the `SLASH_PECKISH1` /
-`SlashCmdList.PECKISH` pair the slash command needs.
+No globals except `FeelingPeckishDB` and the `SLASH_FEELINGPECKISH1` /
+`SlashCmdList.FEELINGPECKISH` pair the slash command needs.
 
 ### 4.2 Tooling and release
 
