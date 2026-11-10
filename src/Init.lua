@@ -31,8 +31,6 @@ local function isEnabled()
 	return ns.getSettings().enabled
 end
 
--- True or false, or nil when the client will not tell us (an aura name that
--- is a hidden "secret" value, or no aura API at all).
 local function addonVersion()
 	local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 	local version = getMetadata and getMetadata(addonName, "Version")
@@ -46,6 +44,8 @@ local function loadedMessage()
 	return Core.loadedMessage(addonVersion(), isEnabled())
 end
 
+-- True or false, or nil when the client will not tell us (an aura name that
+-- is a hidden "secret" value, or no aura API at all).
 local function hasWellFed()
 	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
 		local i = 1

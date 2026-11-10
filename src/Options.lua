@@ -45,6 +45,7 @@ local function addCheck(key, text, x, y)
 	local label = box:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	label:SetPoint("LEFT", box, "RIGHT", 2, 1)
 	label:SetText(text)
+	box:SetHitRectInsets(0, -(label:GetStringWidth() + 4), 0, 0)
 	box:SetScript("OnClick", function(self)
 		draft[key] = self:GetChecked() and true or false
 		refreshStates()
@@ -104,7 +105,12 @@ local function addSlider(key, text, min, max, step, format, y)
 			value:SetText(format(v))
 		end,
 		enable = function(on)
-			slider:EnableMouse(on)
+			-- Mouse stays enabled so a greyed slider swallows clicks (no window drag).
+			if on then
+				slider:Enable()
+			else
+				slider:Disable()
+			end
 			slider:SetAlpha(on and 1 or 0.4)
 			setLabelEnabled(name, on)
 			setLabelEnabled(value, on)
