@@ -2,9 +2,11 @@
 
 World of Warcraft: Forever addon (Lua 5.1, Interface 16001). When the
 player's "Well Fed" food buff falls off it prints a silly message to the
-player's own chat frame (never to a chat channel), plus one reminder 60 s
-later if they have not eaten again. `/peckish on` and `/peckish off` toggle
-it; the setting is saved in `FeelingPeckishDB`. No UI, no libraries.
+player's own chat frame (never to a chat channel), then reminds them if they
+have not eaten again (by default once, 60 s later). `/peckish` opens a small
+settings window: quiet while dead or resting, and the reminder interval, count
+or "until I eat". `/peckish on` and `/peckish off` toggle the addon. Settings
+are saved in `FeelingPeckishDB`. One window, no other UI, no libraries.
 
 ## Spec
 
@@ -25,7 +27,8 @@ Run from the repo root. On Windows, `.sh` scripts need Git Bash.
 Lint and tests must pass before you call work done; CI runs both on every push.
 The build output goes to `.release/` (git-ignored). `scripts/build.sh` only
 works in a normal checkout: inside a git worktree the packager stops with
-"No Git, SVN, or Hg checkout found", so build from `main` after merging.
+"No Git, SVN, or Hg checkout found". A feature branch in the main checkout
+builds fine (the version is then `<tag>-<n>-g<hash>`).
 
 ## Layout
 
@@ -33,19 +36,22 @@ works in a normal checkout: inside a git worktree the packager stops with
 |------|---------|
 | `FeelingPeckish.toc` | Load order and SavedVariables. Every new `src/` file must be listed here |
 | `src/Phrases.lua` | The silly phrases and the picker (pure) |
-| `src/Core.lua` | Buff-state decision logic: when to announce and remind (pure) |
-| `src/Init.lua` | WoW glue: events, timer, slash command, SavedVariables |
+| `src/Core.lua` | Pure decisions: settings defaults and normalisation, when to announce, the reminder series, command parsing, window greying rules |
+| `src/Options.lua` | The settings window (game code): draft until Accept, calls `ns.getSettings` / `ns.applySettings` |
+| `src/Init.lua` | WoW glue: events, the reminder timer, slash command, SavedVariables |
 | `spec/` | busted tests, one `<Module>_spec.lua` per module |
 | `scripts/` | Developer scripts (not shipped) |
+| `docs/` | Design specs and plans (not shipped) |
 | `.pkgmeta` | Packager config: files left out of the package |
 
 ## Code rules
 
 - **Every file starts with `local addonName, ns = ...`** (or `local _, ns = ...`).
   Share code through `ns`, never through new globals.
-- **Keep pure logic separate from game code.** Phrases and buff-state decisions
-  go in modules that call no WoW API and get busted tests. Code that touches
-  frames, events, timers, chat output or the WoW API stays in `src/Init.lua`.
+- **Keep pure logic separate from game code.** Phrases, buff-state and settings
+  decisions go in modules that call no WoW API and get busted tests. Code that
+  touches frames, events, timers, chat output or the WoW API stays in
+  `src/Init.lua` (or `src/Options.lua` for the settings window).
 - **Test pure modules through `LoadAddonFile`** (from `spec/helper.lua`), which
   loads a file the way the game does: `LoadAddonFile("src/Phrases.lua").Phrases`.
 - **Declare every WoW API you use** in `read_globals` in `.luacheckrc`, and every
@@ -62,14 +68,18 @@ works in a normal checkout: inside a git worktree the packager stops with
 
 Anything that needs the game client. When a task depends on one of these,
 finish the parts you can test, then list exactly what the user should try in
-game and what they should expect to see, for example:
+game and what they should expect to see. `PRD.md` section 4.3 is the full
+list; for example:
 
 - Eat food, wait for "Well Fed", then let it expire (or cancel it): one silly
   message appears in your chat frame, and nobody else sees it.
-- Do not eat again: one reminder appears about 60 s later, and no more after it.
-- Eat again before the 60 s are up: no reminder.
+- With default settings, do not eat again: one reminder appears about 60 s
+  later, and no more after it. Eat again before the 60 s are up: no reminder.
+- `/peckish` opens the settings window. Escape, ✕ and Close discard changes;
+  Accept saves them.
+- Interval 30 s, count 3: three reminders 30 s apart, then silence.
 - `/peckish off`, lose the buff: nothing is printed. `/peckish on` turns it back on.
-- `/reload` (or log out and in): the on/off setting is kept.
+- `/reload` (or log out and in): all settings are kept.
 
 ## Changes and releases
 
