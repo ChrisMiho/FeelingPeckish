@@ -1,7 +1,7 @@
 # FeelingPeckish — Product requirements
 
-Status: v0.1.0 released (2026-11-10) for in-game testing (section 4.3). The
-settings window (sections 3.2, 3.3, 3.6 to 3.8) is unreleased, in development.
+Status: v0.2.0 released (2026-11-10), adding the settings window (sections 3.2,
+3.3, 3.6 to 3.8). See section 4.3 for in-game testing.
 
 ## 1. What it is
 
@@ -326,7 +326,7 @@ Lua strings.
 | Version | Adds |
 |---------|------|
 | v0.1.0 | The original behaviour: one on/off switch and a single reminder after 60 s |
-| Unreleased | Settings window, quiet toggles, repeating reminders |
+| v0.2.0 | Settings window, quiet toggles, repeating reminders |
 
 Later ideas (not committed)
 - Match Well Fed by spell ID or icon so non-English clients work.

@@ -5,6 +5,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-10
+
 - A small settings window: type `/peckish` to open it.
 - Toggles to stay quiet while dead or while resting.
 - Repeating reminders: choose the interval and how many, or keep reminding

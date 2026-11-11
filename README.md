@@ -6,7 +6,7 @@ runs out and prints a silly message in your own chat frame, plus one reminder
 messages; nothing is ever sent to a chat channel. One small settings window,
 no libraries.
 
-Status: v0.1.0, first release for in-game testing. See [PRD.md](PRD.md) for the design.
+Status: v0.2.0, adds the settings window. See [PRD.md](PRD.md) for the design.
 
 ## Commands
 
