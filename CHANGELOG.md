@@ -5,6 +5,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-11
+
 - Well Fed running out during a fight is now noticed: the message prints
   right away, then "Fight's over, still no Well Fed" when combat ends, and
   the reminders count from the end of the fight.

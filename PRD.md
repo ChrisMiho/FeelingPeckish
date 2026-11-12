@@ -1,8 +1,9 @@
 # FeelingPeckish — Product requirements
 
-Status: v0.2.1 released (2026-11-11), fixing an error when buffs are hidden in
-combat. v0.2.0 added the settings window (sections 3.2, 3.3, 3.6 to 3.8). See
-section 4.3 for in-game testing.
+Status: v0.3.0 released (2026-11-11): Well Fed running out in combat is
+noticed (section 3.1) and reminders due in combat wait for it to end (3.3).
+v0.2.0 added the settings window (sections 3.2, 3.3, 3.6 to 3.8). See section
+4.3 for in-game testing.
 
 ## 1. What it is
 
