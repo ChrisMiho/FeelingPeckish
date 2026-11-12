@@ -80,6 +80,31 @@ function Core.keepsSeries(settings)
 	return settings.enabled and settings.remindersOn
 end
 
+-- Look for the aura named wanted. readName(i) returns the i-th aura's name,
+-- or nil past the last aura. Returns true, false, or nil when the client will
+-- not tell us: readName raised an error (newer clients refuse aura reads from
+-- addon code while auras are secret, e.g. in combat) or a name is secret.
+-- isSecret (optional) is checked before comparing, since secrets can't be.
+function Core.findBuff(readName, wanted, isSecret)
+	local i = 1
+	while true do
+		local ok, name = pcall(readName, i)
+		if not ok then
+			return nil
+		end
+		if name == nil then
+			return false
+		end
+		if isSecret and isSecret(name) then
+			return nil
+		end
+		if name == wanted then
+			return true
+		end
+		i = i + 1
+	end
+end
+
 -- Called whenever the player's auras change.
 -- state: { hasBuff, dead, resting }
 -- Returns { announce = bool, arm = bool, cancel = bool }:

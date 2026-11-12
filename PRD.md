@@ -55,9 +55,11 @@ Non-goals
 - On `PLAYER_LEAVING_WORLD` forget the state, so a loading screen that
   briefly reports no buffs only sets a new baseline.
 - Buffs are read with `C_UnitAuras.GetAuraDataByIndex`, falling back to
-  `UnitBuff` if the client lacks it. If an aura name is a hidden "secret"
-  value (`issecretvalue`, possible in combat on newer clients), the state is
-  unknown and nothing is decided until the next readable change.
+  `UnitBuff` if the client lacks it. Newer clients can hide auras as "secret"
+  (possible in combat): `GetAuraDataByIndex` then raises an error for addon
+  code, or an aura name is a secret value (`issecretvalue`). Either way the
+  error is caught (no error popup), the state is unknown and nothing is
+  decided until the next readable change.
 - v1 limitation: matching is by English name, so non-English clients will not
   detect the buff. A later version may match by spell ID list or icon.
 

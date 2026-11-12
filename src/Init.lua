@@ -44,38 +44,28 @@ local function loadedMessage()
 	return Core.loadedMessage(addonVersion(), isEnabled())
 end
 
--- True or false, or nil when the client will not tell us (an aura name that
--- is a hidden "secret" value, or no aura API at all).
+local function auraName(i)
+	local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+	return aura and aura.name
+end
+
+local function unitBuffName(i)
+	return (UnitBuff("player", i))
+end
+
+-- True or false, or nil when the client will not tell us (auras are secret
+-- right now, or no aura API at all). Core.findBuff catches the error that
+-- GetAuraDataByIndex raises for addon code while auras are secret.
 local function hasWellFed()
+	local read
 	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-		local i = 1
-		while true do
-			local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-			if not aura then
-				return false
-			end
-			if issecretvalue and issecretvalue(aura.name) then
-				return nil
-			end
-			if aura.name == BUFF_NAME then
-				return true
-			end
-			i = i + 1
-		end
-	end
-	if not UnitBuff then
+		read = auraName
+	elseif UnitBuff then
+		read = unitBuffName
+	else
 		return nil
 	end
-	for i = 1, 40 do
-		local name = UnitBuff("player", i)
-		if not name then
-			return false
-		end
-		if name == BUFF_NAME then
-			return true
-		end
-	end
-	return false
+	return Core.findBuff(read, BUFF_NAME, issecretvalue)
 end
 
 local function context()

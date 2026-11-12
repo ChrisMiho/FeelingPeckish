@@ -123,6 +123,52 @@ describe("Core", function()
 		end)
 	end)
 
+	describe("findBuff", function()
+		local function reader(names)
+			return function(i)
+				return names[i]
+			end
+		end
+
+		it("is true when the buff is among the auras", function()
+			assert.is_true(Core.findBuff(reader({ "Fortitude", "Well Fed" }), "Well Fed"))
+		end)
+
+		it("is false when the auras run out without it", function()
+			assert.is_false(Core.findBuff(reader({ "Fortitude" }), "Well Fed"))
+			assert.is_false(Core.findBuff(reader({}), "Well Fed"))
+		end)
+
+		it("is nil (unknown) when reading an aura raises an error", function()
+			local read = function()
+				error("Auras cannot be accessed when secret while tainted")
+			end
+			assert.is_nil(Core.findBuff(read, "Well Fed"))
+		end)
+
+		it("is nil when an earlier aura errors before the buff is seen", function()
+			local read = function(i)
+				if i == 2 then
+					error("secret")
+				end
+				return ({ "Fortitude", nil, "Well Fed" })[i]
+			end
+			assert.is_nil(Core.findBuff(read, "Well Fed"))
+		end)
+
+		it("is nil when an aura name is secret, without comparing it", function()
+			local secret = setmetatable({}, {
+				__eq = function()
+					error("compared a secret")
+				end,
+			})
+			local isSecret = function(v)
+				return v == nil and false or rawequal(v, secret)
+			end
+			assert.is_nil(Core.findBuff(reader({ secret, "Well Fed" }), "Well Fed", isSecret))
+		end)
+	end)
+
 	describe("canSpeak", function()
 		it("is true by default", function()
 			assert.is_true(Core.canSpeak(state(), settings()))
