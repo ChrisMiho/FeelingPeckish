@@ -5,6 +5,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-11
+
 - Fix: no more "Auras cannot be accessed when secret while tainted by
   'FeelingPeckish'" Lua errors (seen in combat). While buffs are hidden the
   addon now just waits for the next change it can read.

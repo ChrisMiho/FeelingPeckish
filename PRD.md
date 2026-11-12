@@ -1,7 +1,8 @@
 # FeelingPeckish — Product requirements
 
-Status: v0.2.0 released (2026-11-10), adding the settings window (sections 3.2,
-3.3, 3.6 to 3.8). See section 4.3 for in-game testing.
+Status: v0.2.1 released (2026-11-11), fixing an error when buffs are hidden in
+combat. v0.2.0 added the settings window (sections 3.2, 3.3, 3.6 to 3.8). See
+section 4.3 for in-game testing.
 
 ## 1. What it is
 
@@ -329,6 +330,7 @@ Lua strings.
 |---------|------|
 | v0.1.0 | The original behaviour: one on/off switch and a single reminder after 60 s |
 | v0.2.0 | Settings window, quiet toggles, repeating reminders |
+| v0.2.1 | Fix: no Lua error when buffs are hidden ("secret") in combat |
 
 Later ideas (not committed)
 - Match Well Fed by spell ID or icon so non-English clients work.
