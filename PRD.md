@@ -52,7 +52,9 @@ Non-goals
 - Only the transition **had it -> lost it** triggers a falloff. Logging in,
   `/reload` or zoning without the buff never prints anything.
 - On `PLAYER_ENTERING_WORLD` (login, `/reload` and every loading screen)
-  record the current state as the starting point without printing.
+  record the current state as the starting point without printing. If buffs
+  cannot be read at that moment, the state stays unknown and the next
+  readable check sets the starting point.
 - On `PLAYER_LEAVING_WORLD` forget the state, so a loading screen that
   briefly reports no buffs only sets a new baseline.
 - Buffs are read with `C_UnitAuras.GetAuraDataByIndex`, falling back to
@@ -60,7 +62,27 @@ Non-goals
   (possible in combat): `GetAuraDataByIndex` then raises an error for addon
   code, or an aura name is a secret value (`issecretvalue`). Either way the
   error is caught (no error popup), the state is unknown and nothing is
-  decided until the next readable change.
+  decided until the next readable change. Only that "secret" error is caught:
+  any other error still raises, so a real bug shows up instead of the addon
+  silently going quiet.
+- **Running out in combat.** Whenever buffs can be read, remember when Well
+  Fed runs out (its `expirationTime`), and set a timer for just after that
+  moment. Food can't be eaten in combat, so if buffs are hidden when that
+  time has passed, Well Fed is gone: print the falloff message then (the
+  usual suppression applies), but do not start the reminder series yet.
+- **Combat ends** (`PLAYER_REGEN_ENABLED`): check buffs again. If they are
+  still hidden, retry once a second up to 5 times, then wait for the next
+  aura change. At the first readable check after Well Fed ran out in combat:
+  - still no Well Fed, addon on and `remindersOn`: print
+    `Fight's over, still no Well Fed: <phrase>` (unless suppressed) and start
+    the reminder series from now. This message is not a reminder and does
+    not count toward `reminderCount`. With reminders off, print nothing.
+  - Well Fed is there after all: print nothing.
+- If Well Fed disappears early in a fight (death, cancelled), the addon
+  can't tell until combat ends; then it is a normal falloff: one message and
+  the series starts from that moment.
+- The scan reads at most 255 buffs; if it finds no end by then, the state is
+  unknown. A buff without a name does not end the scan.
 - v1 limitation: matching is by English name, so non-English clients will not
   detect the buff. A later version may match by spell ID list or icon.
 
@@ -100,8 +122,9 @@ reminder 60 seconds after the falloff, exactly as in v0.1.0.
   - If `remindUntilFed` is on, or fewer than `reminderCount` reminders have
     come due, schedule the next one `reminderInterval` seconds later.
     Otherwise the series ends.
-  - If the buff state cannot be read at that moment (hidden "secret" aura
-    names), nothing is printed, but the reminder still counts.
+  - If the buff state cannot be read at that moment (hidden "secret" auras,
+    e.g. in combat), the reminder is held, not counted, and comes due as
+    above at the first readable check (normally when combat ends).
 - Cancel the series when the buff comes back, when the addon is turned off
   (by command or by Accept), when a new falloff restarts it, or when Accept
   turns `remindersOn` off. Only one series and one timer exist at a time.
@@ -119,7 +142,9 @@ reminder 60 seconds after the falloff, exactly as in v0.1.0.
   e.g. `|cffffa500FeelingPeckish:|r <phrase>`.
 - Falloff: `FeelingPeckish: <phrase>`.
 - Reminder: `FeelingPeckish: Still peckish: <phrase>`.
-- Both draw from the same 50-phrase pool (section 5), chosen at random, never
+- After a falloff in combat (section 3.1):
+  `FeelingPeckish: Fight's over, still no Well Fed: <phrase>`.
+- All draw from the same 50-phrase pool (section 5), chosen at random, never
   the same phrase twice in a row (the picker remembers the last index and
   rerolls or skips it).
 
@@ -264,6 +289,14 @@ globals with that prefix, such as the frame's close button.)
 15. Untick "Send reminders": only the falloff message prints.
 16. `/reload`: all settings are kept. `/peckish off` with the window open
     unticks "Snack alerts on".
+17. Let Well Fed run out during a fight (check its time left first): the
+    falloff message prints in combat, within about a second of the buff
+    ending. When combat ends, `Fight's over, still no Well Fed:` prints, and
+    with defaults one reminder follows 60 s after that.
+18. Lose Well Fed out of combat, then be in a fight when the 60 s reminder is
+    due: no reminder during the fight; it prints as soon as combat ends.
+19. Die with Well Fed in a fight (quiet when dead off): one normal falloff
+    message when combat ends, no "Fight's over" line.
 
 ## 5. Phrases
 
@@ -331,6 +364,7 @@ Lua strings.
 | v0.1.0 | The original behaviour: one on/off switch and a single reminder after 60 s |
 | v0.2.0 | Settings window, quiet toggles, repeating reminders |
 | v0.2.1 | Fix: no Lua error when buffs are hidden ("secret") in combat |
+| v0.3.0 | Well Fed running out in combat is noticed: message in combat and again when it ends; reminders due in combat wait for it to end |
 
 Later ideas (not committed)
 - Match Well Fed by spell ID or icon so non-English clients work.

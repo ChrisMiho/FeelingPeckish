@@ -66,8 +66,10 @@ local function addCheck(key, text, x, y)
 end
 
 -- A plain horizontal slider (no template) with its name and current value
--- on a line above it. format turns a value into the text shown.
-local function addSlider(key, text, min, max, step, format, y)
+-- on a line above it. Range and step come from Core.NUMBER_SPECS[key];
+-- format turns a value into the text shown.
+local function addSlider(key, text, format, y)
+	local spec = Core.NUMBER_SPECS[key]
 	local name = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	name:SetPoint("TOPLEFT", SLIDER_X, y)
 	name:SetText(text)
@@ -85,15 +87,15 @@ local function addSlider(key, text, min, max, step, format, y)
 	track:SetPoint("LEFT")
 	track:SetPoint("RIGHT")
 	track:SetHeight(6)
-	slider:SetMinMaxValues(min, max)
-	slider:SetValueStep(step)
+	slider:SetMinMaxValues(spec.min, spec.max)
+	slider:SetValueStep(spec.step)
 	if slider.SetObeyStepOnDrag then
 		slider:SetObeyStepOnDrag(true)
 	end
 	-- Set after the range, so the clamp from the initial value of 0 does not
 	-- reach the draft.
 	slider:SetScript("OnValueChanged", function(_, v)
-		v = math.floor(v / step + 0.5) * step
+		v = Core.snap(spec, v)
 		draft[key] = v
 		value:SetText(format(v))
 	end)
@@ -166,8 +168,8 @@ local function build()
 	addCheck("quietWhenResting", "Resting (city or inn)", 22, -108)
 	addHeader("Reminders", -142)
 	addCheck("remindersOn", "Send reminders", 22, -158)
-	addSlider("reminderInterval", "Every", 30, 600, 30, Core.formatInterval, -192)
-	addSlider("reminderCount", "How many", 1, 10, 1, tostring, -240)
+	addSlider("reminderInterval", "Every", Core.formatInterval, -192)
+	addSlider("reminderCount", "How many", tostring, -240)
 	addCheck("remindUntilFed", "Keep reminding until I eat", 22, -288)
 
 	local close = addButton("Close", "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12, function()

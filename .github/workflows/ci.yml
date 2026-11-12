@@ -20,10 +20,11 @@ jobs:
 
       - uses: leafo/gh-actions-luarocks@v6
 
+      # Pinned so a new tool release cannot break CI on its own. Bump on purpose.
       - name: Install luacheck and busted
         run: |
-          luarocks install luacheck
-          luarocks install busted
+          luarocks install luacheck 1.2.0-1
+          luarocks install busted 2.3.0-1
 
       - name: Lint
         run: luacheck .

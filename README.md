@@ -36,7 +36,8 @@ release has the version stamped in and leaves out the development files.
 - Git and the GitHub CLI
 - VS Code with the extensions in `.vscode/extensions.json`
 - LuaJIT and LuaRocks (Lua 5.1, same as the game)
-- `luarocks install luacheck` and `luarocks install busted`
+- `luarocks install luacheck 1.2.0-1` and `luarocks install busted 2.3.0-1`
+  (the versions CI uses)
 - Git Bash (comes with Git for Windows) for the scripts in `scripts/`
 
 ### Build

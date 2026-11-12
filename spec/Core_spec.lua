@@ -28,7 +28,7 @@ describe("Core", function()
 		it("only sets a baseline on the first observation", function()
 			local t = Core.newTracker()
 			local r = Core.onAuraChange(t, state({ hasBuff = false }), settings())
-			assert.same({ announce = false, arm = false, cancel = false }, r)
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false }, r)
 			assert.is_false(t.hadBuff)
 		end)
 
@@ -36,16 +36,16 @@ describe("Core", function()
 			local t = Core.newTracker()
 			Core.baseline(t, true)
 			local r = Core.onAuraChange(t, state({ hasBuff = false }), settings())
-			assert.same({ announce = true, arm = true, cancel = false }, r)
+			assert.same({ announce = true, arm = true, cancel = false, afterCombat = false }, r)
 		end)
 
 		it("does nothing when nothing changed", function()
 			local t = Core.newTracker()
 			Core.baseline(t, true)
-			assert.same({ announce = false, arm = false, cancel = false },
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false },
 				Core.onAuraChange(t, state({ hasBuff = true }), settings()))
 			Core.baseline(t, false)
-			assert.same({ announce = false, arm = false, cancel = false },
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false },
 				Core.onAuraChange(t, state({ hasBuff = false }), settings()))
 		end)
 
@@ -62,7 +62,7 @@ describe("Core", function()
 			local t = Core.newTracker()
 			Core.baseline(t, false)
 			local r = Core.onAuraChange(t, state({ hasBuff = true }), settings())
-			assert.same({ announce = false, arm = false, cancel = true }, r)
+			assert.same({ announce = false, arm = false, cancel = true, afterCombat = false }, r)
 		end)
 
 		it("stays silent but still arms the reminder when dead", function()
@@ -87,7 +87,7 @@ describe("Core", function()
 			local s = state()
 			s.hasBuff = nil -- state() can't set nil through its overrides table
 			local r = Core.onAuraChange(t, s, settings())
-			assert.same({ announce = false, arm = false, cancel = false }, r)
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false }, r)
 			assert.is_true(t.hadBuff)
 		end)
 
@@ -96,7 +96,7 @@ describe("Core", function()
 			Core.baseline(t, true)
 			Core.reset(t)
 			local r = Core.onAuraChange(t, state({ hasBuff = false }), settings())
-			assert.same({ announce = false, arm = false, cancel = false }, r)
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false }, r)
 			assert.is_false(t.hadBuff)
 		end)
 
@@ -104,7 +104,7 @@ describe("Core", function()
 			local t = Core.newTracker()
 			Core.baseline(t, true)
 			local r = Core.onAuraChange(t, state(), settings({ enabled = false }))
-			assert.same({ announce = false, arm = false, cancel = false }, r)
+			assert.same({ announce = false, arm = false, cancel = false, afterCombat = false }, r)
 			assert.is_false(t.hadBuff)
 		end)
 
@@ -112,7 +112,7 @@ describe("Core", function()
 			local t = Core.newTracker()
 			Core.baseline(t, true)
 			local r = Core.onAuraChange(t, state(), settings({ remindersOn = false }))
-			assert.same({ announce = true, arm = false, cancel = false }, r)
+			assert.same({ announce = true, arm = false, cancel = false, afterCombat = false }, r)
 		end)
 
 		it("announces while resting when quietWhenResting is off", function()
@@ -120,6 +120,129 @@ describe("Core", function()
 			Core.baseline(t, true)
 			local r = Core.onAuraChange(t, state({ resting = true }), settings({ quietWhenResting = false }))
 			assert.is_true(r.announce)
+		end)
+	end)
+
+	describe("onAuraChange while buffs are hidden (combat)", function()
+		local NONE = { announce = false, arm = false, cancel = false, afterCombat = false }
+
+		local function hidden(now, over)
+			local s = state(over)
+			s.hasBuff = nil
+			s.now = now
+			return s
+		end
+
+		local function fedUntil(expires)
+			local t = Core.newTracker()
+			Core.baseline(t, true, expires)
+			return t
+		end
+
+		it("announces once the known end time has passed, but waits to arm", function()
+			local t = fedUntil(100)
+			local r = Core.onAuraChange(t, hidden(101), settings())
+			assert.same({ announce = true, arm = false, cancel = false, afterCombat = false }, r)
+			assert.is_false(t.hadBuff)
+			assert.is_true(t.overdue)
+			-- Only once.
+			assert.same(NONE, Core.onAuraChange(t, hidden(102), settings()))
+		end)
+
+		it("decides nothing before the end time or without one", function()
+			local t = fedUntil(100)
+			assert.same(NONE, Core.onAuraChange(t, hidden(99), settings()))
+			assert.is_true(t.hadBuff)
+			local u = fedUntil(nil)
+			assert.same(NONE, Core.onAuraChange(u, hidden(1e9), settings()))
+			assert.is_true(u.hadBuff)
+		end)
+
+		it("follows the quiet rules for the combat message", function()
+			local t = fedUntil(100)
+			local r = Core.onAuraChange(t, hidden(101, { resting = true }), settings())
+			assert.is_false(r.announce)
+			assert.is_true(t.overdue)
+		end)
+
+		it("owes nothing when the addon is off", function()
+			local t = fedUntil(100)
+			assert.same(NONE, Core.onAuraChange(t, hidden(101), settings({ enabled = false })))
+			assert.is_false(t.overdue)
+		end)
+
+		it("says so again and arms the series when combat ends", function()
+			local t = fedUntil(100)
+			Core.onAuraChange(t, hidden(101), settings())
+			local r = Core.onAuraChange(t, state({ now = 130 }), settings())
+			assert.same({ announce = false, arm = true, cancel = false, afterCombat = true }, r)
+			assert.is_false(t.overdue)
+			assert.same(NONE, Core.onAuraChange(t, state({ now = 131 }), settings()))
+		end)
+
+		it("prints nothing after combat when reminders are off", function()
+			local t = fedUntil(100)
+			Core.onAuraChange(t, hidden(101), settings({ remindersOn = false }))
+			assert.same(NONE, Core.onAuraChange(t, state(), settings({ remindersOn = false })))
+		end)
+
+		it("arms but stays quiet after combat when a quiet rule applies", function()
+			local t = fedUntil(100)
+			Core.onAuraChange(t, hidden(101), settings())
+			local r = Core.onAuraChange(t, state({ dead = true }), settings())
+			assert.is_false(r.afterCombat)
+			assert.is_true(r.arm)
+		end)
+
+		it("stays quiet if the buff turns out to be there after combat", function()
+			local t = fedUntil(100)
+			Core.onAuraChange(t, hidden(101), settings())
+			assert.same(NONE, Core.onAuraChange(t, state({ hasBuff = true, expires = 500 }), settings()))
+			assert.is_true(t.hadBuff)
+			assert.is_false(t.overdue)
+		end)
+
+		it("treats a buff lost early in the fight as a normal falloff after combat", function()
+			local t = fedUntil(100)
+			assert.same(NONE, Core.onAuraChange(t, hidden(50), settings()))
+			local r = Core.onAuraChange(t, state({ now = 60 }), settings())
+			assert.same({ announce = true, arm = true, cancel = false, afterCombat = false }, r)
+		end)
+
+		it("remembers the end time from every readable check", function()
+			local t = Core.newTracker()
+			Core.onAuraChange(t, state({ hasBuff = true, expires = 200 }), settings())
+			assert.equal(200, t.expires)
+			Core.onAuraChange(t, state({ hasBuff = true, expires = 900 }), settings()) -- ate again
+			assert.equal(900, t.expires)
+			Core.onAuraChange(t, state({ hasBuff = false }), settings())
+			assert.is_nil(t.expires)
+		end)
+
+		it("forgets the end time and any debt on a loading screen", function()
+			local t = fedUntil(100)
+			Core.onAuraChange(t, hidden(101), settings())
+			Core.reset(t)
+			assert.is_nil(t.expires)
+			assert.is_false(t.overdue)
+		end)
+	end)
+
+	describe("expiryCheckDelay", function()
+		it("is the time left plus a small margin while fed with an end time", function()
+			local t = Core.newTracker()
+			Core.baseline(t, true, 100)
+			assert.equal(40 + Core.EXPIRY_MARGIN, Core.expiryCheckDelay(t, 60))
+			assert.equal(Core.EXPIRY_MARGIN, Core.expiryCheckDelay(t, 150)) -- already past
+		end)
+
+		it("is nil when not fed or the end time is unknown", function()
+			local t = Core.newTracker()
+			assert.is_nil(Core.expiryCheckDelay(t, 0))
+			Core.baseline(t, true, nil)
+			assert.is_nil(Core.expiryCheckDelay(t, 0))
+			Core.baseline(t, false)
+			assert.is_nil(Core.expiryCheckDelay(t, 0))
 		end)
 	end)
 
@@ -132,6 +255,34 @@ describe("Core", function()
 
 		it("is true when the buff is among the auras", function()
 			assert.is_true(Core.findBuff(reader({ "Fortitude", "Well Fed" }), "Well Fed"))
+		end)
+
+		it("also returns the buff's end time, if the reader gives one", function()
+			local read = function(i)
+				if i == 1 then
+					return "Well Fed", 1234
+				end
+			end
+			local found, expires = Core.findBuff(read, "Well Fed")
+			assert.is_true(found)
+			assert.equal(1234, expires)
+		end)
+
+		it("gives no end time for a permanent (0) or secret end time", function()
+			local secret = {}
+			local isSecret = function(v)
+				return rawequal(v, secret)
+			end
+			local function one(expires)
+				return function(i)
+					if i == 1 then
+						return "Well Fed", expires
+					end
+				end
+			end
+			assert.is_nil(select(2, Core.findBuff(one(0), "Well Fed")))
+			assert.is_nil(select(2, Core.findBuff(one(secret), "Well Fed", isSecret)))
+			assert.is_nil(select(2, Core.findBuff(one(nil), "Well Fed")))
 		end)
 
 		it("is false when the auras run out without it", function()
@@ -166,6 +317,58 @@ describe("Core", function()
 				return v == nil and false or rawequal(v, secret)
 			end
 			assert.is_nil(Core.findBuff(reader({ secret, "Well Fed" }), "Well Fed", isSecret))
+		end)
+
+		it("lets any other error through, so real bugs still show", function()
+			local read = function()
+				error("attempt to index a nil value")
+			end
+			assert.has_error(function()
+				Core.findBuff(read, "Well Fed")
+			end, "attempt to index a nil value")
+		end)
+
+		it("is nil after MAX_AURAS reads that never end", function()
+			local reads = 0
+			local read = function()
+				reads = reads + 1
+				return "Fortitude"
+			end
+			assert.is_nil(Core.findBuff(read, "Well Fed"))
+			assert.equal(Core.MAX_AURAS, reads)
+		end)
+	end)
+
+	describe("baseline", function()
+		it("records an unreadable state as unknown, not as no buff", function()
+			local t = Core.newTracker()
+			Core.baseline(t, nil)
+			assert.is_nil(t.hadBuff)
+			Core.baseline(t, true)
+			assert.is_true(t.hadBuff)
+			Core.baseline(t, false)
+			assert.is_false(t.hadBuff)
+		end)
+	end)
+
+	describe("snap", function()
+		it("clamps, then rounds to a step counted from the minimum", function()
+			local spec = { min = 45, max = 600, step = 30 }
+			assert.equal(75, Core.snap(spec, 60)) -- tie rounds up
+			assert.equal(45, Core.snap(spec, 59))
+			assert.equal(45, Core.snap(spec, 0))
+			assert.equal(585, Core.snap(spec, 9999)) -- largest step not above max
+		end)
+
+		it("never rounds up past the maximum", function()
+			assert.equal(9, Core.snap({ min = 0, max = 10, step = 3 }, 10))
+		end)
+
+		it("covers every numeric setting through NUMBER_SPECS", function()
+			for key, spec in pairs(Core.NUMBER_SPECS) do
+				assert.is_number(Core.DEFAULTS[key])
+				assert.equal(Core.DEFAULTS[key], Core.snap(spec, Core.DEFAULTS[key]))
+			end
 		end)
 	end)
 
@@ -247,11 +450,14 @@ describe("Core", function()
 			assert.equal(1, s.due)
 		end)
 
-		it("skips but counts when buffs cannot be read", function()
+		it("holds without counting when buffs cannot be read", function()
 			local st = state()
 			st.hasBuff = nil
 			local s = Core.newSeries()
-			assert.same({ print = false, again = true }, Core.reminderDue(s, st, settings({ reminderCount = 2 })))
+			assert.same({ print = false, again = false, hold = true }, Core.reminderDue(s, st, settings()))
+			assert.equal(0, s.due)
+			-- Readable again (combat over): the held reminder comes due as normal.
+			assert.same({ print = true, again = false }, Core.reminderDue(s, state(), settings()))
 			assert.equal(1, s.due)
 		end)
 

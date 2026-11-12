@@ -26,6 +26,7 @@ read_globals = {
 	"C_AddOns",
 	"C_Timer",
 	"GetAddOnMetadata",
+	"GetTime",
 	"C_UnitAuras",
 	"CreateFrame",
 	"DEFAULT_CHAT_FRAME",

@@ -5,6 +5,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- Well Fed running out during a fight is now noticed: the message prints
+  right away, then "Fight's over, still no Well Fed" when combat ends, and
+  the reminders count from the end of the fight.
+- A reminder that comes due during a fight now waits and prints when combat
+  ends, instead of being skipped.
+- Fix: a buff with no name in your buff list no longer hides Well Fed from
+  the addon (which could print a false "buff gone" message).
+- Fix: unexpected Lua errors while reading buffs are no longer hidden, so a
+  real problem shows up instead of the addon silently going quiet.
+
 ## [0.2.1] - 2026-11-11
 
 - Fix: no more "Auras cannot be accessed when secret while tainted by
